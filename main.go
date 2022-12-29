@@ -1,8 +1,9 @@
 package main
 
 import (
-	"airtouch4-go/airtouch"
 	"log"
+
+	"github.com/alistairpialek/airtouch4-go/airtouch"
 )
 
 func main() {

@@ -1,3 +1,5 @@
+github.com/alistairpialek/airtouch4-go v0.0.0-20221224094455-d1b68c76fb71 h1:vOFGwhBM3NGCvRkRGZ32VruuP1yT1qbFz5TNV5UbLdg=
+github.com/alistairpialek/airtouch4-go v0.0.0-20221224094455-d1b68c76fb71/go.mod h1:wQuiN5fPDcj62pDT6dSFhQ8/R/0WfTrTeF1f9yw1XUY=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/elliotchance/orderedmap v1.5.0 h1:1IsExUsjv5XNBD3ZdC7jkAAqLWOOKdbPTmkHx63OsBg=
 github.com/elliotchance/orderedmap v1.5.0/go.mod h1:wsDwEaX5jEoyhbs7x93zk2H/qv0zwuhg4inXhDkYqys=
