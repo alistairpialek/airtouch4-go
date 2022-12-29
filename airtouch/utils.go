@@ -3,7 +3,6 @@ package airtouch
 import (
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"time"
 )
@@ -11,7 +10,7 @@ import (
 // ReadStringFromFile reads a value from filename.
 func (a *AirTouch) ReadStringFromFile(filename string) (string, error) {
 	if a.FileExists(filename) {
-		valueString, fileErr := ioutil.ReadFile(fmt.Sprintf("%s/%s", a.RootTempDir, filename))
+		valueString, fileErr := os.ReadFile(fmt.Sprintf("%s/%s", a.RootTempDir, filename))
 		if fileErr != nil {
 			return "", fileErr
 		}
@@ -23,7 +22,7 @@ func (a *AirTouch) ReadStringFromFile(filename string) (string, error) {
 // WriteValueToFile writes a value to filename.
 func (a *AirTouch) WriteValueToFile(filename string, value string) error {
 	content := []byte(value)
-	err := ioutil.WriteFile(fmt.Sprintf("%s/%s", a.RootTempDir, filename), content, 0644)
+	err := os.WriteFile(fmt.Sprintf("%s/%s", a.RootTempDir, filename), content, 0644)
 
 	if err != nil {
 		return err
