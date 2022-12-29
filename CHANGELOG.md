@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+### [1.0.1](https://github.com/alistairpialek/airtouch4-go/compare/v1.0.0...v1.0.1) (2022-12-29)
+
+
+### Bug Fixes
+
+* **mod:** remove self ([#3](https://github.com/alistairpialek/airtouch4-go/issues/3)) ([290343b](https://github.com/alistairpialek/airtouch4-go/commit/290343b2fb3ac98f56adb055c6f299610c305331))
+
 ## 1.0.0 (2022-12-29)
 
 
