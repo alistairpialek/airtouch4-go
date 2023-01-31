@@ -33,7 +33,7 @@ func (a *AirTouch) GenerateGroupStatistics() error {
 		}
 	}
 
-	for _, g := range a.Groups {
+	for i, g := range a.Groups {
 		filename := fmt.Sprintf("airtouch_%s_activity", g.Name)
 
 		// Room requires heating/cooling.
@@ -111,8 +111,8 @@ func (a *AirTouch) GenerateGroupStatistics() error {
 			//a.Log.Debug("didn't found an Off block so assuming this has always been on")
 		}
 
-		g.DayDurationMinutes = durationTotalMins
-		log.Printf("%s has been On for %f minutes today", g.Name, g.DayDurationMinutes)
+		a.Groups[i].DayDurationMinutes = durationTotalMins
+		log.Printf("%s has been On for %f minutes today", a.Groups[i].Name, a.Groups[i].DayDurationMinutes)
 	}
 
 	return nil
