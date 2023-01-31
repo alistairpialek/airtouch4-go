@@ -44,4 +44,9 @@ func main() {
 	if err != nil {
 		log.Panicf("Error setting AC mode: %s", err)
 	}
+
+	for _, g := range a.Groups {
+		log.Printf("group.Name = %s", g.Name)
+		log.Printf("group.DayDurationMinutes = %f", g.DayDurationMinutes)
+	}
 }
