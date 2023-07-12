@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.1.0](https://github.com/alistairpialek/airtouch4-go/compare/v1.0.2...v1.1.0) (2023-07-12)
+
+
+### Features
+
+* **group:** add ability to set group temperature ([#5](https://github.com/alistairpialek/airtouch4-go/issues/5)) ([e848203](https://github.com/alistairpialek/airtouch4-go/commit/e848203e5a411c190bf80fa061a735a2983acdf4))
+
 ### [1.0.2](https://github.com/alistairpialek/airtouch4-go/compare/v1.0.1...v1.0.2) (2023-01-31)
 
 
