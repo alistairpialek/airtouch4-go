@@ -22,6 +22,11 @@ func main() {
 
 	log.Printf("Temp of %s is %f", a.Groups[0].Name, a.Groups[0].Temperature)
 
+	for _, g := range a.Groups {
+		log.Printf("group.Name = %s", g.Name)
+		log.Printf("group.DayDurationMinutes = %f", g.DayDurationMinutes)
+	}
+
 	err = a.GetACData()
 	if err != nil {
 		log.Panicf("Error getting AC data: %s", err)
@@ -45,8 +50,8 @@ func main() {
 		log.Panicf("Error setting AC mode: %s", err)
 	}
 
-	for _, g := range a.Groups {
-		log.Printf("group.Name = %s", g.Name)
-		log.Printf("group.DayDurationMinutes = %f", g.DayDurationMinutes)
+	err = a.SetGroupToTemperature("1", "19")
+	if err != nil {
+		log.Panicf("Error setting group temperature: %s", err)
 	}
 }
