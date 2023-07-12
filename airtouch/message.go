@@ -29,6 +29,8 @@ const (
 	ACStatus = "80b0012d0000f4cf"
 	// ACControl is used to send messages to the AC.
 	ACControl = "2c"
+	// GroupControl is used to send messages to the AC to control groups.
+	GroupControl = "2a"
 )
 
 // MessageOutput models the Airtouch 4 reply message.

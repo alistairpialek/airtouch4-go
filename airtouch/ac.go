@@ -47,6 +47,20 @@ func (a *AirTouch) ACStatusMap() map[string]string {
 	return m
 }
 
+// GroupControlMap sets default values.
+func (a *AirTouch) GroupControlMap() *orderedmap.OrderedMap {
+	m := orderedmap.NewOrderedMap()
+
+	m.Set("GroupNumber", "1:1-8")
+	m.Set("GroupSettingValue", "2:6-8")
+	m.Set("HaveTemperatureControl", "2:4-5")
+	m.Set("Power", "2:1-3")
+	m.Set("TargetSetpoint", "3:1-8")
+	m.Set("ZeroedByte", "4:1-8")
+
+	return m
+}
+
 // ACControlMap sets default values.
 func (a *AirTouch) ACControlMap() *orderedmap.OrderedMap {
 	m := orderedmap.NewOrderedMap()
@@ -94,6 +108,37 @@ func (a *AirTouch) GetACStatus() error {
 	return nil
 }
 
+func (a *AirTouch) SetGroupToTemperature(groupNumber string, temperature string) error {
+	controlMessage := a.GroupControlMap()
+	controlMessage.Set("Power", "3")
+	controlMessage.Set("HaveTemperatureControl", "3")
+	controlMessage.Set("GroupSettingValue", "5") // Temperature rather than percentage
+	controlMessage.Set("TargetSetpoint", temperature)
+	controlMessage.Set("GroupNumber", groupNumber)
+	controlMessage.Set("ZeroedByte", "0")
+
+	message, err := a.MessageObjectToMessagePacket(GroupControl, controlMessage)
+	if err != nil {
+		return err
+	}
+
+	messageIn := MessageInput{
+		Message: *message,
+	}
+
+	messageOut, err := a.CommunicateMessage(&messageIn)
+	if err != nil {
+		return err
+	}
+
+	err = a.DecodeGroupStatusMessage(*messageOut)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // SetCoolingModeForAC adjusts the ACControlMap to set the desired AC operating mode.
 func (a *AirTouch) SetCoolingModeForAC(acMode string) error {
 	controlMessage := a.ACControlMap()
@@ -111,12 +156,10 @@ func (a *AirTouch) SetCoolingModeForAC(acMode string) error {
 	controlMessage.Set("TargetSetpoint", "63")
 	controlMessage.Set("AcNumber", "0")
 
-	message, err := a.MessageObjectToMessagePacket(controlMessage)
+	message, err := a.MessageObjectToMessagePacket(ACControl, controlMessage)
 	if err != nil {
 		return err
 	}
-
-	//a.Log.Debug("sending message = %s", message)
 
 	messageIn := MessageInput{
 		Message: *message,
@@ -136,18 +179,21 @@ func (a *AirTouch) SetCoolingModeForAC(acMode string) error {
 }
 
 // MessageObjectToMessagePacket transforms our object to a string we can then send to the AC.
-func (a *AirTouch) MessageObjectToMessagePacket(messageObject *orderedmap.OrderedMap) (*string, error) {
-
-	messageString := "80b001" + ACControl
-
-	acControlPacketLocationMap := a.ACControlMap()
-
+func (a *AirTouch) MessageObjectToMessagePacket(messageType string, messageObject *orderedmap.OrderedMap) (*string, error) {
+	messageString := "80b001" + messageType
 	binaryMessagePayloadString := ""
+	var packetLocationMap *orderedmap.OrderedMap
 
-	for _, k := range acControlPacketLocationMap.Keys() {
+	if messageType == ACControl {
+		packetLocationMap = a.ACControlMap()
+	} else { // GroupControl
+		packetLocationMap = a.GroupControlMap()
+	}
+
+	for _, k := range packetLocationMap.Keys() {
 		//a.Log.Debug("Value is = %s", l)
 		//a.Log.Debug("Key is = %s", k)
-		value, _ := acControlPacketLocationMap.Get(k)
+		value, _ := packetLocationMap.Get(k)
 		valueAsString := value.(string)
 
 		messageValue, _ := messageObject.Get(k)

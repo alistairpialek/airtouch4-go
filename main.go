@@ -44,4 +44,9 @@ func main() {
 	if err != nil {
 		log.Panicf("Error setting AC mode: %s", err)
 	}
+
+	err = a.SetGroupToTemperature("1", "19")
+	if err != nil {
+		log.Panicf("Error setting group temperature: %s", err)
+	}
 }
