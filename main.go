@@ -8,7 +8,7 @@ import (
 
 func main() {
 	a := airtouch.AirTouch{
-		IPAddress:        "x.x.x.x",
+		IPAddress:        "192.168.1.35",
 		Port:             9004,
 		RootTempDir:      "/tmp",
 		Timezone:         "Australia/Sydney",
@@ -21,6 +21,11 @@ func main() {
 	}
 
 	log.Printf("Temp of %s is %f", a.Groups[0].Name, a.Groups[0].Temperature)
+
+	for _, g := range a.Groups {
+		log.Printf("group.Name = %s", g.Name)
+		log.Printf("group.DayDurationMinutes = %f", g.DayDurationMinutes)
+	}
 
 	err = a.GetACData()
 	if err != nil {

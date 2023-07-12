@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+### [1.0.2](https://github.com/alistairpialek/airtouch4-go/compare/v1.0.1...v1.0.2) (2023-01-31)
+
+
+### Bug Fixes
+
+* **stats:** group duration on counter not being assigned correctly ([#4](https://github.com/alistairpialek/airtouch4-go/issues/4)) ([c0713a9](https://github.com/alistairpialek/airtouch4-go/commit/c0713a974bb52c0ec2033b4c4e9755206e31f7b8))
+
 ### [1.0.1](https://github.com/alistairpialek/airtouch4-go/compare/v1.0.0...v1.0.1) (2022-12-29)
 
 
