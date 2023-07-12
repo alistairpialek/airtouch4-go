@@ -8,7 +8,7 @@ import (
 
 func main() {
 	a := airtouch.AirTouch{
-		IPAddress:        "192.168.1.35",
+		IPAddress:        "x.x.x.x",
 		Port:             9004,
 		RootTempDir:      "/tmp",
 		Timezone:         "Australia/Sydney",
