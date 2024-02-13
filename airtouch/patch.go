@@ -90,7 +90,7 @@ func (a *AirTouch) RunACModeSwitchingPatch() error {
 			// At temperature or cooler.
 			if focusGroup.diffSetpointTemp <= 0 {
 				log.Printf("Group temp diff %f is less than 0, so turning Fan mode on", focusGroup.diffSetpointTemp)
-				err := a.SetCoolingModeForAC("Fan")
+				err := a.SetACState("On", "Fan")
 				if err != nil {
 					return err
 				}
@@ -105,7 +105,7 @@ func (a *AirTouch) RunACModeSwitchingPatch() error {
 			// At temperature or warmer.
 			if focusGroup.diffSetpointTemp >= 0 {
 				log.Printf("Group temp diff %f is greater than 0, so turning Fan mode on", focusGroup.diffSetpointTemp)
-				err := a.SetCoolingModeForAC("Fan")
+				err := a.SetACState("On", "Fan")
 				if err != nil {
 					return err
 				}
@@ -128,7 +128,7 @@ func (a *AirTouch) RunACModeSwitchingPatch() error {
 			if focusGroup.diffSetpointTemp >= acBackToCoolingToleranceTemp {
 				log.Printf("Temp condition to turn AC back to Cool satisfied")
 
-				err := a.SetCoolingModeForAC("Cool")
+				err := a.SetACState("On", "Cool")
 				if err != nil {
 					return err
 				}
@@ -141,7 +141,7 @@ func (a *AirTouch) RunACModeSwitchingPatch() error {
 			if focusGroup.diffSetpointTemp <= acBackToHeatingToleranceTemp {
 				log.Printf("Temp condition to turn AC back to Heat satisfied")
 
-				err := a.SetCoolingModeForAC("Heat")
+				err := a.SetACState("On", "Heat")
 				if err != nil {
 					return err
 				}
