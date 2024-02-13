@@ -45,7 +45,7 @@ func main() {
 		log.Panicf("Error generating group statistics: %s", err)
 	}
 
-	err = a.SetCoolingModeForAC("Fan")
+	err = a.SetACState("On", "Fan")
 	if err != nil {
 		log.Panicf("Error setting AC mode: %s", err)
 	}

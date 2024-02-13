@@ -37,7 +37,9 @@ func (a *AirTouch) GenerateGroupStatistics() error {
 		filename := fmt.Sprintf("airtouch_%s_activity", g.Name)
 
 		// Room requires heating/cooling.
-		if a.AC.AcMode != "Fan" && g.PowerState == "On" && g.OpenPercentage > 10 {
+		// Needs to be above 50 as that is the default on percentage from Fan -> Heat/Cool.
+		// When that transition happens, we don't want to record that there is active heating/cooling occurring.
+		if a.AC.AcMode != "Fan" && g.PowerState == "On" && g.OpenPercentage > 50 {
 			err = a.AppendValueToFile(filename, fmt.Sprintf("%s,%s\n", g.PowerState, localTime.Format(time.RFC3339)))
 			if err != nil {
 				log.Printf("Unable to write group activity to file, please correct, skipping statistics")
