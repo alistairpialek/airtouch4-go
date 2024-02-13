@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.2.0](https://github.com/alistairpialek/airtouch4-go/compare/v1.1.0...v1.2.0) (2024-02-13)
+
+
+### Features
+
+* add functionality to turn AC on/off ([#6](https://github.com/alistairpialek/airtouch4-go/issues/6)) ([593aa4b](https://github.com/alistairpialek/airtouch4-go/commit/593aa4bf3847c7f215370096615c83395577e9d0))
+
 ## [1.1.0](https://github.com/alistairpialek/airtouch4-go/compare/v1.0.2...v1.1.0) (2023-07-12)
 
 
