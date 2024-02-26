@@ -114,7 +114,7 @@ func (a *AirTouch) RunACModeSwitchingPatch() error {
 				//a.Log.Debug("Temp condition to turn AC back to Fan NOT satisfied")
 			}
 		}
-	} else if a.AC.AcMode == "Fan" && !a.escapeProgramming() {
+	} else if a.AC.AcMode == "Fan" {
 		log.Printf("AC mode is Fan and Temp is %f", acTemperature)
 
 		//currentTempDiff := acTemperature - float64(a.AC.AcTargetSetpoint)
@@ -207,7 +207,7 @@ func (a *AirTouch) getTemperature() (*groupTemperature, error) {
 	return &focusGroup, nil
 }
 
-func (a *AirTouch) escapeProgramming() bool {
+func (a *AirTouch) EscapeProgramming() bool {
 	for _, g := range a.Groups {
 		if g.Name == "Nursery" && g.PowerState == "On" && g.ControlMethod == "PercentageControl" && g.OpenPercentage == 95 {
 			log.Printf("Criteria to skip programming met, keeping Fan on")
