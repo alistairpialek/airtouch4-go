@@ -10,10 +10,22 @@ import (
 
 // AC models AC attributes.
 type AC struct {
+	AcFanSpeed       string
 	AcMode           string
 	AcTargetSetpoint int
 	Temperature      float64
 	Spill            bool
+}
+
+// ACFanSpeedMap maps stringy AC fan speeds to their numerical value.
+func (a *AirTouch) ACFanSpeedMap() map[string]string {
+	m := make(map[string]string)
+
+	m["Low"] = "2"
+	m["Medium"] = "3"
+	m["High"] = "4"
+
+	return m
 }
 
 // ACPowerMap maps stringy AC powers to their numerical value.
@@ -150,7 +162,7 @@ func (a *AirTouch) SetGroupToTemperature(groupNumber string, temperature string)
 }
 
 // SetCoolingModeForAC adjusts the ACControlMap to set the desired AC operating mode.
-func (a *AirTouch) SetACState(powerState string, modeState string) error {
+func (a *AirTouch) SetACState(powerState string, modeState string, fanSpeed *string) error {
 	controlMessage := a.ACControlMap()
 	controlMessage.Set("Power", "0")
 	controlMessage.Set("AcNumber", "0")
@@ -163,7 +175,11 @@ func (a *AirTouch) SetACState(powerState string, modeState string) error {
 	// These are required to leave these settings unchanged.
 	controlMessage.Set("Power", a.ACPowerMap()[powerState])
 	controlMessage.Set("AcMode", a.ACModeMap()[modeState])
-	controlMessage.Set("AcFanSpeed", "15")
+	if fanSpeed == nil {
+		controlMessage.Set("AcFanSpeed", "15")
+	} else {
+		controlMessage.Set("AcFanSpeed", a.ACFanSpeedMap()[*fanSpeed])
+	}
 	controlMessage.Set("TargetSetpoint", "63")
 	controlMessage.Set("AcNumber", "0")
 

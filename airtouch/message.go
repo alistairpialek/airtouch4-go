@@ -215,6 +215,14 @@ func (a *AirTouch) DecodeACStatusMessage(response MessageOutput) error {
 				} else {
 					a.AC.Spill = true
 				}
+			} else if k == "AcFanSpeed" {
+				if int(*mapValue) == 2 {
+					a.AC.AcFanSpeed = "Low"
+				} else if int(*mapValue) == 3 {
+					a.AC.AcFanSpeed = "Medium"
+				} else {
+					a.AC.AcFanSpeed = "High"
+				}
 			}
 		}
 	}
