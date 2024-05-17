@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.4.0](https://github.com/alistairpialek/airtouch4-go/compare/v1.3.0...v1.4.0) (2024-05-17)
+
+
+### Features
+
+* allow fan speed control ([#8](https://github.com/alistairpialek/airtouch4-go/issues/8)) ([ecd7a36](https://github.com/alistairpialek/airtouch4-go/commit/ecd7a3699269d546cf869e4c0669238210207e91))
+
 ## [1.3.0](https://github.com/alistairpialek/airtouch4-go/compare/v1.2.0...v1.3.0) (2024-02-26)
 
 
