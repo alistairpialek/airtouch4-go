@@ -209,7 +209,7 @@ func (a *AirTouch) getTemperature() (*groupTemperature, error) {
 
 func (a *AirTouch) EscapeProgramming() bool {
 	for _, g := range a.Groups {
-		if g.Name == "Nursery" && g.PowerState == "On" && g.ControlMethod == "PercentageControl" && g.OpenPercentage == 95 {
+		if g.Name == "Master" && g.PowerState == "On" && g.ControlMethod == "PercentageControl" && g.OpenPercentage == 50 {
 			log.Printf("Criteria to skip programming met, keeping Fan on")
 			return true
 		}
