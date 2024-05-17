@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+### [1.4.1](https://github.com/alistairpialek/airtouch4-go/compare/v1.4.0...v1.4.1) (2024-05-17)
+
+
+### Bug Fixes
+
+* **ac:** change escape to master room ([#9](https://github.com/alistairpialek/airtouch4-go/issues/9)) ([c3d2541](https://github.com/alistairpialek/airtouch4-go/commit/c3d2541aeb0c9301779922bed4268988e76f3c72))
+
 ## [1.4.0](https://github.com/alistairpialek/airtouch4-go/compare/v1.3.0...v1.4.0) (2024-05-17)
 
 
