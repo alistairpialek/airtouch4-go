@@ -1,5 +1,7 @@
 package airtouch
 
+import "encoding/hex"
+
 // AirTouch models AC and groups.
 type AirTouch struct {
 	IPAddress        string
@@ -28,6 +30,16 @@ func (a *AirTouch) CommunicateMessage(message *MessageInput) (*MessageOutput, er
 	//a.Log.Debug("Response: %s", responseBytes)
 
 	messageOut, err := a.TranslatePacketToMessage(responseBytes)
+	if err != nil {
+		return nil, err
+	}
+
+	request, err := hex.DecodeString(message.Message)
+	if err != nil {
+		return nil, err
+	}
+
+	err = checkReplyMatches(request, messageOut)
 	if err != nil {
 		return nil, err
 	}

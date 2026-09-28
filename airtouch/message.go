@@ -5,6 +5,7 @@ import (
 	"encoding/binary"
 	"encoding/hex"
 	"fmt"
+	"io"
 	"log"
 	"net"
 	"strconv"
@@ -33,6 +34,16 @@ const (
 	GroupControl = "2a"
 )
 
+const (
+	// headerSize is the frame header, address, id, type and length fields.
+	headerSize = 8
+	// checksumSize is the CRC16 that ends every frame.
+	checksumSize = 2
+)
+
+// frameHeader starts every frame in both directions.
+var frameHeader = []byte{0x55, 0x55}
+
 // MessageOutput models the Airtouch 4 reply message.
 type MessageOutput struct {
 	Address []byte
@@ -40,6 +51,16 @@ type MessageOutput struct {
 	Type    []byte
 	Length  []byte
 	Body    []byte
+}
+
+// checksum is the CRC16/MODBUS the console expects over a frame's address,
+// id, type, length and body.
+func checksum(data []byte) uint16 {
+	return crc16.Checksum(&crc16.Conf{
+		Poly: 0x8005, BitRev: true,
+		IniVal: 0xffff, FinVal: 0x0,
+		BigEnd: false,
+	}, data)
 }
 
 // PrepareMessage takes a message, performs a checksum and hex encodes a message with CRC.
@@ -50,15 +71,11 @@ func (a *AirTouch) PrepareMessage(message *MessageInput) error {
 	}
 	//a.Log.Info("fromHex = % x", data)
 
-	checksum := crc16.Checksum(&crc16.Conf{
-		Poly: 0x8005, BitRev: true,
-		IniVal: 0xffff, FinVal: 0x0,
-		BigEnd: false,
-	}, data)
-	//a.Log.Info("checksum = %d", checksum)
+	sum := checksum(data)
+	//a.Log.Info("checksum = %d", sum)
 
 	b := make([]byte, 2)
-	binary.BigEndian.PutUint16(b, checksum)
+	binary.BigEndian.PutUint16(b, sum)
 	//fmt.Println(string(b))
 	//a.Log.Info("b = %v", b)
 
@@ -91,7 +108,6 @@ func (a *AirTouch) PrepareMessage(message *MessageInput) error {
 func (a *AirTouch) SendMessage(message *string) ([]byte, error) {
 	hostname := net.ParseIP(a.IPAddress)
 	port := a.Port
-	bufferSize := 1024
 
 	// Create TCP address.
 	tcpAddr, err := net.ResolveTCPAddr("tcp", fmt.Sprintf("%s:%d", hostname, port))
@@ -122,50 +138,124 @@ func (a *AirTouch) SendMessage(message *string) ([]byte, error) {
 
 	//a.Log.Debug("wrote: %d", written)
 
-	reply := make([]byte, bufferSize)
-	_, err = conn.Read(reply)
+	reply, err := readReply(conn)
 	if err != nil {
 		return nil, fmt.Errorf("reading reply: %s", err)
 	}
 
-	//a.Log.Debug("read: %d", read)
-	//a.Log.Debug("reply: %v", reply)
+	return reply, nil
+}
+
+// readReply reads one whole reply frame. A single Read returns whatever one
+// TCP segment carried, so a reply split across two would otherwise be decoded
+// with its tail missing. The header's declared length says how much more to
+// wait for, and the connection's deadline bounds the wait.
+func readReply(r io.Reader) ([]byte, error) {
+	reply := make([]byte, headerSize)
+	if _, err := io.ReadFull(r, reply); err != nil {
+		return nil, fmt.Errorf("header: %s", err)
+	}
+
+	if !bytes.Equal(reply[0:2], frameHeader) {
+		return nil, fmt.Errorf("header is % x, not % x", reply[0:2], frameHeader)
+	}
+
+	bodyLength := int(binary.BigEndian.Uint16(reply[6:8]))
+	reply = append(reply, make([]byte, bodyLength+checksumSize)...)
+	if _, err := io.ReadFull(r, reply[headerSize:]); err != nil {
+		return nil, fmt.Errorf("body of %d bytes: %s", bodyLength, err)
+	}
 
 	return reply, nil
 }
 
-// TranslatePacketToMessage decodes the server reply.
+// TranslatePacketToMessage decodes the server reply. A reply that is short,
+// disagrees with its own declared length or fails its checksum is an error
+// rather than data, because the decoders read fixed offsets and would turn any
+// of those into a plausible-looking but wrong value.
 func (a *AirTouch) TranslatePacketToMessage(dataResult []byte) (MessageOutput, error) {
-	//a.Log.Debug("starting with: %v", dataResult)
+	if len(dataResult) < headerSize+checksumSize {
+		return MessageOutput{}, fmt.Errorf("reply is %d bytes, shorter than an empty frame", len(dataResult))
+	}
+
+	if !bytes.Equal(dataResult[0:2], frameHeader) {
+		return MessageOutput{}, fmt.Errorf("reply header is % x, not % x", dataResult[0:2], frameHeader)
+	}
+
+	bodyLength := int(binary.BigEndian.Uint16(dataResult[6:8]))
+	if len(dataResult) != headerSize+bodyLength+checksumSize {
+		return MessageOutput{}, fmt.Errorf("reply declares a %d byte body but is %d bytes", bodyLength, len(dataResult))
+	}
+
+	// The checksum covers everything between the frame header and itself.
+	end := headerSize + bodyLength
+	want := binary.BigEndian.Uint16(dataResult[end:])
+	if got := checksum(dataResult[2:end]); got != want {
+		return MessageOutput{}, fmt.Errorf("reply checksum is %04x, computed %04x", want, got)
+	}
 
 	response := MessageOutput{
 		Address: dataResult[2:4],
 		ID:      dataResult[4:5],
 		Type:    dataResult[5:6],
 		Length:  dataResult[6:8],
-		Body:    dataResult[8:],
+		Body:    dataResult[8:end],
 	}
 
-	//a.Log.Debug("address: %v", response.Address)
-	//a.Log.Debug("messageId: %v", response.Id)
-	//a.Log.Debug("messageType: %x", response.Type)
-	//a.Log.Debug("dataLength: %v", response.Length)
-	//a.Log.Debug("body: %v", response.Body)
-
 	return response, nil
+}
+
+// replyType is the type a reply to request should carry. A control message is
+// answered with the status of what it controlled; a status request is
+// answered in kind.
+func replyType(request []byte) byte {
+	switch request[3] {
+	case 0x2a:
+		return 0x2b
+	case 0x2c:
+		return 0x2d
+	default:
+		return request[3]
+	}
+}
+
+// checkReplyMatches refuses a reply that answers a different request, which
+// the decoders would otherwise read as if it were the one asked for.
+func checkReplyMatches(request []byte, response MessageOutput) error {
+	if want := replyType(request); response.Type[0] != want {
+		return fmt.Errorf("reply type is %02x, expected %02x", response.Type[0], want)
+	}
+
+	if response.ID[0] != request[2] {
+		return fmt.Errorf("reply id is %02x, expected %02x", response.ID[0], request[2])
+	}
+
+	return nil
 }
 
 // DecodeGroupNameMessage decodes the group name which is not returned with the status request.
 func (a *AirTouch) DecodeGroupNameMessage(response MessageOutput) error {
 	//a.Log.Debug("groupname: %v", response.Body)
 
+	if len(response.Body) < 2 {
+		return fmt.Errorf("group name body is %d bytes", len(response.Body))
+	}
+
 	for i, chunk := range chunk(response.Body[2:], 9) {
 		if i > 3 {
 			break
 		}
 
+		if len(chunk) < 9 {
+			return fmt.Errorf("group name entry %d is %d bytes, expected 9", i, len(chunk))
+		}
+
 		groupNumber := chunk[0]
 		groupName := chunk[1:9]
+
+		if int(groupNumber) >= len(a.Groups) {
+			return fmt.Errorf("group name entry %d names group %d, but %d groups were reported", i, groupNumber, len(a.Groups))
+		}
 		//a.Log.Debug("groupNumber: %d", groupNumber)
 		//a.Log.Debug("groupName: %s", groupName)
 		// Remove any NULL characters
@@ -443,6 +533,11 @@ func (a *AirTouch) TranslateMapValueToValue(chunk []byte, packetInfoLocation str
 	if upperValue > 8 {
 		length = 16
 		//a.Log.Debug("upperValue > 8 so length changed to 16")
+	}
+
+	// A 16 bit value spans this byte and the next.
+	if needed := byteNumber + length/8 - 1; needed > len(chunk) {
+		return nil, fmt.Errorf("%s needs %d bytes, chunk has %d", packetInfoLocation, needed, len(chunk))
 	}
 
 	// Spec counts bytes backwards so so do we.
