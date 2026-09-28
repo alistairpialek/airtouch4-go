@@ -114,12 +114,35 @@ func TestTranslateRefusesBadReplies(t *testing.T) {
 	}
 }
 
-func TestReplyToAnotherRequestIsAnError(t *testing.T) {
-	a := serve(t, frame(0x01, 0x2b, make([]byte, 6)))
+func TestFrameOfAnotherTypeIsSkipped(t *testing.T) {
+	a := serve(t, frame(0x01, 0x2f, make([]byte, 6)), frame(0x01, 0x2d, acStatusBody))
+
+	if err := a.GetACStatus(); err != nil {
+		t.Fatal(err)
+	}
+
+	if a.AC.Temperature != 23 {
+		t.Errorf("decoded %+v, want the 2d reply rather than the 2f frame", a.AC)
+	}
+}
+
+func TestOnlyFramesOfAnotherTypeIsAnError(t *testing.T) {
+	a := serve(t, frame(0x01, 0x2f, make([]byte, 6)))
 
 	err := a.GetACStatus()
-	if err == nil || !strings.Contains(err.Error(), "reply type is 2b, expected 2d") {
+	if err == nil || !strings.Contains(err.Error(), "reply type is 2f, expected 2d, then reading the next reply") {
 		t.Fatalf("err = %v, want a type mismatch", err)
+	}
+}
+
+func TestCorruptFrameIsNotSkipped(t *testing.T) {
+	corrupt := frame(0x01, 0x2f, make([]byte, 6))
+	corrupt[9] ^= 0x01
+	a := serve(t, corrupt, frame(0x01, 0x2d, acStatusBody))
+
+	err := a.GetACStatus()
+	if err == nil || !strings.Contains(err.Error(), "checksum") {
+		t.Fatalf("err = %v, want a checksum error", err)
 	}
 }
 

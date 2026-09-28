@@ -138,12 +138,39 @@ func (a *AirTouch) SendMessage(message *string) ([]byte, error) {
 
 	//a.Log.Debug("wrote: %d", written)
 
-	reply, err := readReply(conn)
-	if err != nil {
-		return nil, fmt.Errorf("reading reply: %s", err)
-	}
+	return readMatchingReply(conn, messageToSend[2:])
+}
 
-	return reply, nil
+// readMatchingReply reads frames until one answers request. The console can
+// send a frame of another type ahead of the reply, complete and with a valid
+// checksum; that frame is logged and skipped rather than decoded as the reply,
+// and the connection's deadline bounds how long this waits for the real one.
+func readMatchingReply(r io.Reader, request []byte) ([]byte, error) {
+	var stray error
+
+	for {
+		reply, err := readReply(r)
+		if err != nil {
+			if stray != nil {
+				return nil, fmt.Errorf("%s, then reading the next reply: %s", stray, err)
+			}
+			return nil, fmt.Errorf("reading reply: %s", err)
+		}
+
+		// A corrupt frame is not skipped: nothing after it can be trusted to
+		// start on a frame boundary.
+		response, err := decodeFrame(reply)
+		if err != nil {
+			return nil, err
+		}
+
+		stray = checkReplyMatches(request, response)
+		if stray == nil {
+			return reply, nil
+		}
+
+		log.Printf("Skipping an AirTouch frame that does not answer the request (%s): % x", stray, reply)
+	}
 }
 
 // readReply reads one whole reply frame. A single Read returns whatever one
@@ -174,6 +201,11 @@ func readReply(r io.Reader) ([]byte, error) {
 // rather than data, because the decoders read fixed offsets and would turn any
 // of those into a plausible-looking but wrong value.
 func (a *AirTouch) TranslatePacketToMessage(dataResult []byte) (MessageOutput, error) {
+	return decodeFrame(dataResult)
+}
+
+// decodeFrame is TranslatePacketToMessage, which needs nothing from an AirTouch.
+func decodeFrame(dataResult []byte) (MessageOutput, error) {
 	if len(dataResult) < headerSize+checksumSize {
 		return MessageOutput{}, fmt.Errorf("reply is %d bytes, shorter than an empty frame", len(dataResult))
 	}
